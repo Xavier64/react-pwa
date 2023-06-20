@@ -42,7 +42,7 @@ function App() {
   const onUpdatedog = async (newValues, id) => {
     try {
       const dogToUpdate = doc(db, "dogs", id);
-      await updateDog(dogToUpdate, { ...newValues });
+      // await updateDog(dogToUpdate, { ...newValues });
       await getDogs();
     } catch (e) {
       console.error(e);
