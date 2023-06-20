@@ -1,23 +1,27 @@
 import React, { useState, useEffect } from "react";
 import "./App.css";
 import Auth from "./components/Auth";
-import { Button, Layout } from "antd";
+import { Layout } from "antd";
 import { db } from "./firebase";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, addDoc, doc } from "firebase/firestore";
+import { DogsTable } from "./table/index";
+import { DogForm } from "./form/index";
 
 const { Header, Content, Footer } = Layout;
 
 function App() {
-  const [title, setTitle] = useState("Titre de ma page");
+  const [dogs, setDogs] = useState([]);
   const [dog, setDog] = useState([]);
 
   const dogCollectionRef = collection(db, "dogs");
+
+
   const getDogs = async () => {
     try {
       const data = await getDocs(dogCollectionRef);
-      const docs = data.docs.map((doc) => doc.data());
-      console.log(data, "data");
-      console.log(docs, "docs");
+      const docs = data.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
+
+      setDogs(docs);
     } catch (err) {
       console.error(err);
     }
@@ -27,11 +31,23 @@ function App() {
     getDogs();
   }, []);
 
-  useEffect(() => {
-    document.title = title;
-  }, [title]);
+  const onAddDog = async (values) => {
+    try {
+      await addDoc(dogCollectionRef, { ...values });
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
-  console.log(title, "title");
+  const onUpdatedog = async (newValues, id) => {
+    try {
+      const dogToUpdate = doc(db, "dogs", id);
+      await updateDog(dogToUpdate, { ...newValues });
+      await getDogs();
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   return (
     <Layout>
@@ -39,9 +55,8 @@ function App() {
       <Header />
       <Content style={{ paddingTop: "40px" }}>
         <Auth />
-        <Button onClick={() => setTitle(`${Math.random()}-${title}`)}>
-          Modifier le titre
-        </Button>
+        <DogForm onAddDog={onAddDog} dog={dog} onUpdatedog={onUpdatedog} />
+        <DogsTable dataSource={dogs} />
       </Content>
       <Footer />
     </Layout>
